@@ -84,7 +84,7 @@ st.markdown("""
 AGENT_ROSTER = {
     "Titan": "openai/gpt-oss-120b",
     "Mnemosyne": "llama-3.3-70b-versatile",
-    "Coeus": "deepseek-r1-distill-llama-70b",
+    "Coeus": "llama-3.3-70b-versatile",
     "Theia": "llama-3.3-70b-versatile",
     "Oceanus": "llama-3.1-8b-instant",
     "Iapetus": "llama-3.3-70b-versatile",
