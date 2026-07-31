@@ -1,1 +1,3 @@
-streamlitgroqrequests
+streamlit
+groq
+requests
