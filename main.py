@@ -85,7 +85,7 @@ AGENT_ROSTER = {
     "Titan": "openai/gpt-oss-120b",
     "Mnemosyne": "llama-3.3-70b-versatile",
     "Coeus": "llama-3.3-70b-versatile",
-    "Theia": "qwen-3.6-27b",
+    "Theia": "llama-3.3-70b-versatile",
     "Oceanus": "llama-3.1-8b-instant",
     "Iapetus": "llama-3.3-70b-versatile",
     "Phoebe": "llama-3.3-70b-versatile"
