@@ -91,21 +91,22 @@ AGENT_ROSTER = {
     "Phoebe": "llama-3.3-70b-versatile"
 }
 
+# Custom Agent Avatar Links from ImgBB
 AGENT_AVATARS = {
-    "Titan": "https://cdn.discordapp.com/attachments/1525238408710979766/1532594925911281854/titanlogo_1.png?ex=6a6d6bc0&is=6a6c1a40&hm=2fb5f3f10f2ddb73c1c9371c7ef91fbbcd686dd43fb7880cf764efe222700cdd",
-    "Mnemosyne": "https://cdn.discordapp.com/attachments/1525238474586853447/1532595548778004550/Screenshot_2026-07-30_11.39.34_PM-removebg-preview.png?ex=6a6d6c55&is=6a6c1ad5&hm=13670f4f8edf10ec587c45f3617def6981a871f93e877abfcf99c92bfe4317d2",
-    "Coeus": "https://cdn.discordapp.com/attachments/1525238517079347433/1532595488522506250/Screenshot_2026-07-30_11.39.44_PM-removebg-preview.png?ex=6a6d6c46&is=6a6c1ac6&hm=b324cedfbce142a4f6772a921394fcbbd850e5fd1a9f5d44a3fb4a370a31486e",
-    "Theia": "https://cdn.discordapp.com/attachments/1527841726772023296/1532595456289411145/Screenshot_2026-07-30_11.40.00_PM-removebg-preview.png?ex=6a6d6c3f&is=6a6c1abf&hm=df918b4ff93188c32fe15502176637fefdc3b47f197234f07e5920302756d35c",
-    "Oceanus": "https://cdn.discordapp.com/attachments/1527841824402706443/1532595423963779162/Screenshot_2026-07-30_11.40.07_PM-removebg-preview.png?ex=6a6d6c37&is=6a6c1ab7&hm=791034b7f8db699bbb726675a94788abd9b3e617dc8210dd1125e250929f6c58",
-    "Iapetus": "https://cdn.discordapp.com/attachments/1527841993210728499/1532595398911463444/Screenshot_2026-07-30_11.40.12_PM-removebg-preview.png?ex=6a6d6c31&is=6a6c1ab1&hm=be919f421b0b99cc5ad3ffcf61fa5ee8c5191c86cc6e8c02cfa126665d523b99",
-    "Phoebe": "https://cdn.discordapp.com/attachments/1527842097443508375/1532594886401069196/Screenshot_2026-07-30_11.40.22_PM-removebg-preview.png?ex=6a6d6bb7&is=6a6c1a37&hm=bc287b8f53d40e4ab03974de334f5b9c6023db345b35f7a1156d2010e98a5f86"
+    "Titan": "https://ibb.co/5XQbM5cc",
+    "Mnemosyne": "https://ibb.co/rRG9nks4",
+    "Coeus": "https://ibb.co/WhvLDLT",
+    "Theia": "https://ibb.co/jkLfgHKz",
+    "Oceanus": "https://ibb.co/chhHfXHn",
+    "Iapetus": "https://ibb.co/6cBpb0jc",
+    "Phoebe": "https://ibb.co/cSrzkWM3"
 }
 
 AGENT_PROMPTS = {
     "Titan": "You are Titan, the heavy-duty 120B orchestrator. Be casual, direct, and honest. Provide clean, safe, and helpful responses.",
     "Mnemosyne": "You are Mnemosyne, the priority memory pipeline. Your goal is to maintain deep context across sessions. Keep track of user preferences. Be casual, honest, and helpful.",
     "Coeus": "You are Coeus, the multi-agent teamwork and deep-thinking core. You break down tasks into sub-tasks and critically analyze code. Be casual, honest, and helpful.",
-    "Theia": "You are Theia, the visual data analyzer. You provide design feedback, identify UI bugs, and generate CSS. Be casual, honest, and helpful.",
+    "Theia": "You are Theia, the visual data and interface analyzer. You provide design feedback, identify UI bugs, and analyze layouts. Be casual, honest, and helpful.",
     "Oceanus": "You are Oceanus, the ultimate routing engine and web intelligence coordinator. Be casual, honest, and helpful.",
     "Iapetus": "You are Iapetus, the bridge to physical reality. You specialize in low-level hardware instructions (C++ for Arduino, MicroPython). Be casual, honest, and helpful.",
     "Phoebe": "You are Phoebe, the proactive code supervisor. You scan architectures and predict bugs before they compile. Be casual, honest, and helpful."
@@ -242,7 +243,7 @@ with st.sidebar:
     st.markdown("### System Controls")
     st.markdown("---")
     
-    # Live Tavily Web Search Toggle (Ensures variable is always defined)
+    # Live Tavily Web Search Toggle
     st.markdown("### 🌐 Web Intelligence")
     enable_web_search = st.toggle("Enable Live Web Search (Tavily)", value=True)
     
@@ -290,17 +291,13 @@ with chat_col:
     with chat_container:
         for msg in st.session_state.chat_history:
             if msg["role"] == "user":
-                avatar = "👤"
+                avatar = "https://api.dicebear.com/7.x/bottts/svg?seed=User&backgroundColor=4a5568"
             else:
                 agent_name = msg.get("agent_name", "Titan")
-                avatar = AGENT_AVATARS.get(agent_name, "⚡")
+                avatar = AGENT_AVATARS.get(agent_name, "https://api.dicebear.com/7.x/bottts/svg?seed=Titan")
                 
             with st.chat_message(msg["role"], avatar=avatar):
                 st.markdown(msg["content"])
-
-    uploaded_image = None
-    if selected_agent in ["Theia", "Auto-Select (Intent Router)"]:
-        uploaded_image = st.file_uploader("Upload UI Screenshot for Theia", type=["png", "jpg", "jpeg"])
 
     user_input = st.chat_input("Enter command directives to Promethean...")
 
@@ -322,7 +319,7 @@ with code_col:
 if user_input:
     st.session_state.chat_history.append({"role": "user", "content": user_input})
     with chat_container:
-        with st.chat_message("user", avatar="👤"):
+        with st.chat_message("user", avatar="https://api.dicebear.com/7.x/bottts/svg?seed=User&backgroundColor=4a5568"):
             st.markdown(user_input)
             
     client = get_groq_client()
@@ -353,16 +350,9 @@ if user_input:
         if web_results:
             current_content += f"\n\n[SYSTEM NOTE - Real-Time Web Context from Tavily]:\n{web_results}\n(Use this information to answer the user's prompt if relevant.)"
 
-    if uploaded_image and active_agent == "Theia":
-        base64_img = base64.b64encode(uploaded_image.read()).decode('utf-8')
-        current_content = [
-            {"type": "text", "text": current_content},
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
-        ]
-        
     messages.append({"role": "user", "content": current_content})
 
-    avatar = AGENT_AVATARS.get(active_agent, "⚡")
+    avatar = AGENT_AVATARS.get(active_agent, "https://api.dicebear.com/7.x/bottts/svg?seed=Titan")
     with chat_container:
         with st.chat_message("assistant", avatar=avatar):
             message_placeholder = st.empty()
