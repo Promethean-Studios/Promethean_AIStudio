@@ -204,11 +204,10 @@ def get_groq_client():
 # 4. AUTHENTICATION & LOADING GATES
 # ------------------------------------------------------------------
 if not st.session_state.authenticated:
-    st.markdown("<br><br><br><h1 style='text-align: center; font-weight: 600;'>Welcome to Promethean Studio</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #555;'>Secure Developer Gateway</p>", unsafe_allow_html=True)
-    
+    st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
+        st.image("https://i.ibb.co/jvhbLFxr/OGIN.png", use_container_width=True)
         st.markdown('<div style="background: #F8F9FA; padding: 2.5rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">', unsafe_allow_html=True)
         auth_mode = st.radio("Select Access Tier", ["Free Daily Limit (30k)", "Bring Your Own Key (Groq)"])
         
