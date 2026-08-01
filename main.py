@@ -91,15 +91,15 @@ AGENT_ROSTER = {
     "Phoebe": "llama-3.3-70b-versatile"
 }
 
-# Custom Agent Avatar Links from ImgBB
+# Direct Custom Agent Avatar Image Links from ImgBB
 AGENT_AVATARS = {
-    "Titan": "https://ibb.co/5XQbM5cc",
-    "Mnemosyne": "https://ibb.co/rRG9nks4",
-    "Coeus": "https://ibb.co/WhvLDLT",
-    "Theia": "https://ibb.co/jkLfgHKz",
-    "Oceanus": "https://ibb.co/chhHfXHn",
-    "Iapetus": "https://ibb.co/6cBpb0jc",
-    "Phoebe": "https://ibb.co/cSrzkWM3"
+    "Titan": "https://i.ibb.co/KctT09yy/titanlogo-1.png",
+    "Mnemosyne": "https://i.ibb.co/Zp69ydmW/Screenshot-2026-07-30-11-39-34-PM-removebg-preview.png",
+    "Coeus": "https://i.ibb.co/b05kHkf/Screenshot-2026-07-30-11-39-44-PM.png",
+    "Theia": "https://i.ibb.co/0yf2hQNK/Screenshot-2026-07-30-11-40-00-PM-removebg-preview.png",
+    "Oceanus": "https://i.ibb.co/whhXGrXm/Screenshot-2026-07-30-11-40-07-PM-removebg-preview.png",
+    "Iapetus": "https://i.ibb.co/cKLpth4K/Screenshot-2026-07-30-11-40-12-PM-removebg-preview.png",
+    "Phoebe": "https://i.ibb.co/B5C8chd3/Screenshot-2026-07-30-11-40-22-PM-removebg-preview.png"
 }
 
 AGENT_PROMPTS = {
@@ -291,10 +291,10 @@ with chat_col:
     with chat_container:
         for msg in st.session_state.chat_history:
             if msg["role"] == "user":
-                avatar = "https://api.dicebear.com/7.x/bottts/svg?seed=User&backgroundColor=4a5568"
+                avatar = "👤"
             else:
                 agent_name = msg.get("agent_name", "Titan")
-                avatar = AGENT_AVATARS.get(agent_name, "https://api.dicebear.com/7.x/bottts/svg?seed=Titan")
+                avatar = AGENT_AVATARS.get(agent_name, "⚡")
                 
             with st.chat_message(msg["role"], avatar=avatar):
                 st.markdown(msg["content"])
@@ -319,7 +319,7 @@ with code_col:
 if user_input:
     st.session_state.chat_history.append({"role": "user", "content": user_input})
     with chat_container:
-        with st.chat_message("user", avatar="https://api.dicebear.com/7.x/bottts/svg?seed=User&backgroundColor=4a5568"):
+        with st.chat_message("user", avatar="👤"):
             st.markdown(user_input)
             
     client = get_groq_client()
@@ -352,7 +352,7 @@ if user_input:
 
     messages.append({"role": "user", "content": current_content})
 
-    avatar = AGENT_AVATARS.get(active_agent, "https://api.dicebear.com/7.x/bottts/svg?seed=Titan")
+    avatar = AGENT_AVATARS.get(active_agent, "⚡")
     with chat_container:
         with st.chat_message("assistant", avatar=avatar):
             message_placeholder = st.empty()
