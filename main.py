@@ -11,6 +11,7 @@ from groq import Groq
 # ------------------------------------------------------------------
 st.set_page_config(
     page_title="Promethean Studio", 
+    page_icon="https://i.ibb.co/Cpmd4TCH/Screenshot-2026-08-01-2-34-26-AM-removebg-preview.png",
     layout="wide", 
     initial_sidebar_state="expanded"
 )
@@ -91,7 +92,7 @@ AGENT_ROSTER = {
     "Phoebe": "llama-3.3-70b-versatile"
 }
 
-# Direct Custom Agent Avatar Image Links from ImgBB
+# Direct Custom Agent Avatar Image Links
 AGENT_AVATARS = {
     "Titan": "https://i.ibb.co/KctT09yy/titanlogo-1.png",
     "Mnemosyne": "https://i.ibb.co/Zp69ydmW/Screenshot-2026-07-30-11-39-34-PM-removebg-preview.png",
@@ -102,6 +103,8 @@ AGENT_AVATARS = {
     "Phoebe": "https://i.ibb.co/B5C8chd3/Screenshot-2026-07-30-11-40-22-PM-removebg-preview.png"
 }
 
+USER_AVATAR = "https://i.ibb.co/PvVH62RP/user-logo-removebg-preview.png"
+
 AGENT_PROMPTS = {
     "Titan": "You are Titan, the heavy-duty 120B orchestrator. Be casual, direct, and honest. Provide clean, safe, and helpful responses.",
     "Mnemosyne": "You are Mnemosyne, the priority memory pipeline. Your goal is to maintain deep context across sessions. Keep track of user preferences. Be casual, honest, and helpful.",
@@ -111,6 +114,12 @@ AGENT_PROMPTS = {
     "Iapetus": "You are Iapetus, the bridge to physical reality. You specialize in low-level hardware instructions (C++ for Arduino, MicroPython). Be casual, honest, and helpful.",
     "Phoebe": "You are Phoebe, the proactive code supervisor. You scan architectures and predict bugs before they compile. Be casual, honest, and helpful."
 }
+
+# Default UI State Variable Pre-initializations (Prevents Pylance reportUndefinedVariable)
+enable_web_search = True
+temperature = 0.7
+sys_prompt = "You are a helpful, casual AI assistant. Provide clean, safe, and friendly responses."
+selected_agent = "Auto-Select (Intent Router)"
 
 # ------------------------------------------------------------------
 # 3. SESSION STATE, ROUTING & TAVILY WEB SEARCH
@@ -126,7 +135,7 @@ if "workspace_code" not in st.session_state:
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 
-def extract_code(text):
+def extract_code(text: str):
     """Safely extracts code blocks without breaking raw markdown rendering."""
     bt = chr(96) * 3
     pattern = re.escape(bt) + r'(?:[\w]*\n)?(.*?)' + re.escape(bt)
@@ -135,7 +144,7 @@ def extract_code(text):
         return "\n\n".join(code_blocks)
     return None
 
-def fetch_tavily_web_search(query):
+def fetch_tavily_web_search(query: str):
     """Performs real-time web search via Tavily API."""
     tavily_key = ""
     try:
@@ -156,26 +165,30 @@ def fetch_tavily_web_search(query):
             data = response.json()
             results = data.get("results", [])
             if results:
-                snippets = [f"- [{r.get('title')}]({r.get('url')}): {r.get('content')}" for r in results]
+                snippets = [f"- [{r.get('title', 'Source')}]({r.get('url', '#')}): {r.get('content', '')}" for r in results]
                 return "\n".join(snippets)
     except Exception:
         return None
     return None
 
-def route_intent(prompt, client):
+def route_intent(prompt: str, client: Groq):
+    """Determines the active agent based on intent."""
     router_sys = "You are an intent router. Read the user's prompt and output ONLY ONE name: Titan, Mnemosyne, Coeus, Theia, Oceanus, Iapetus, Phoebe."
     try:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[{"role": "system", "content": router_sys}, {"role": "user", "content": prompt}],
-            temperature=0.0, max_tokens=10
+            temperature=0.0,
+            max_tokens=10
         )
-        choice = response.choices[0].message.content.strip().title()
+        raw_choice = response.choices[0].message.content
+        choice = raw_choice.strip().title() if raw_choice else "Titan"
         return choice if choice in AGENT_ROSTER else "Titan"
     except Exception:
         return "Titan" 
 
 def get_groq_client():
+    """Initializes and returns Groq client using session key or secrets."""
     key = st.session_state.api_key
     if not key:
         try:
@@ -240,6 +253,7 @@ if st.session_state.loading:
 # 5. MAIN STUDIO UI & SIDEBAR
 # ------------------------------------------------------------------
 with st.sidebar:
+    st.image("https://i.ibb.co/1fF9R2hj/Promethean-Studios.png", use_container_width=True)
     st.markdown("### System Controls")
     st.markdown("---")
     
@@ -274,6 +288,9 @@ with st.sidebar:
     st.markdown("[📺 YouTube Channel](https://youtube.com/@titanaioffcial?si=Q3vgj6velbJGeNvJ)")
     st.markdown("[💻 GitHub Repository](https://github.com/Promethean-Studios)")
 
+# Top Banner Header
+st.image("https://i.ibb.co/7NyFcpCK/Promethean-Studios-1.png", use_container_width=True)
+
 top_col1, top_col2 = st.columns([1, 1])
 with top_col1:
     selected_agent = st.selectbox(
@@ -291,12 +308,12 @@ with chat_col:
     with chat_container:
         for msg in st.session_state.chat_history:
             if msg["role"] == "user":
-                avatar = "👤"
+                msg_avatar = USER_AVATAR
             else:
                 agent_name = msg.get("agent_name", "Titan")
-                avatar = AGENT_AVATARS.get(agent_name, "⚡")
+                msg_avatar = AGENT_AVATARS.get(agent_name, "⚡")
                 
-            with st.chat_message(msg["role"], avatar=avatar):
+            with st.chat_message(msg["role"], avatar=msg_avatar):
                 st.markdown(msg["content"])
 
     user_input = st.chat_input("Enter command directives to Promethean...")
@@ -319,7 +336,7 @@ with code_col:
 if user_input:
     st.session_state.chat_history.append({"role": "user", "content": user_input})
     with chat_container:
-        with st.chat_message("user", avatar="👤"):
+        with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(user_input)
             
     client = get_groq_client()
@@ -352,9 +369,9 @@ if user_input:
 
     messages.append({"role": "user", "content": current_content})
 
-    avatar = AGENT_AVATARS.get(active_agent, "⚡")
+    bot_avatar = AGENT_AVATARS.get(active_agent, "⚡")
     with chat_container:
-        with st.chat_message("assistant", avatar=avatar):
+        with st.chat_message("assistant", avatar=bot_avatar):
             message_placeholder = st.empty()
             full_response = f"**[{active_agent}]** "
             
@@ -367,8 +384,9 @@ if user_input:
                 )
                 
                 for chunk in stream:
-                    if chunk.choices[0].delta.content is not None:
-                        full_response += chunk.choices[0].delta.content
+                    delta = chunk.choices[0].delta.content if chunk.choices else None
+                    if delta is not None:
+                        full_response += delta
                         message_placeholder.markdown(full_response + "▌")
                         
                 message_placeholder.markdown(full_response)
