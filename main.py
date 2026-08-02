@@ -21,9 +21,14 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
     
-    /* Apply Roboto Condensed across general text elements */
-    body, p, h1, h2, h3, h4, span, label, div, .stMarkdown, .stSelectbox, .stTextInput, .stRadio { 
+    /* Apply Roboto Condensed safely without breaking Streamlit Material Icons */
+    body, p, h1, h2, h3, h4, label, .stMarkdown, .stSelectbox, .stTextInput, .stRadio { 
         font-family: 'Roboto Condensed', sans-serif !important; 
+    }
+    
+    /* Explicitly protect Streamlit icons from being overridden */
+    .stIcon, .material-symbols-rounded, span[data-baseweb="icon"] {
+        font-family: 'Material Symbols Rounded', 'Material Icons' !important;
     }
     
     [data-testid="stAppViewContainer"], .stApp { background-color: #FFFFFF !important; }
@@ -80,6 +85,17 @@ AGENT_ROSTER = {
     "Oceanus": "llama-3.1-8b-instant",
     "Iapetus": "llama-3.3-70b-versatile",
     "Phoebe": "llama-3.3-70b-versatile"
+}
+
+AGENT_DESCRIPTIONS = {
+    "Auto-Select (Intent Router)": "Automatically scans your prompt and assigns the best agent for the job.",
+    "Titan": "Heavy-duty orchestrator. Best for complex logic, general reasoning, and heavy lifting.",
+    "Mnemosyne": "Priority memory pipeline. Maintains deep context and tracks your preferences.",
+    "Coeus": "Multi-agent teamwork core. Breaks down complex tasks and critically analyzes code.",
+    "Theia": "Visual data & interface analyzer. Perfect for UI bugs and layout design.",
+    "Oceanus": "Web intelligence coordinator. Scours the internet for real-time data.",
+    "Iapetus": "Hardware specialist. Writes low-level C++, Arduino, and MicroPython code.",
+    "Phoebe": "Proactive code supervisor. Scans architectures and predicts bugs before compilation."
 }
 
 AGENT_AVATARS = {
@@ -318,15 +334,15 @@ with st.sidebar:
     st.image("https://i.ibb.co/1fF9R2hj/Promethean-Studios.png", use_container_width=True)
     
     if st.session_state.firebase_uid:
-        st.success("🟢 Cloud Account Connected")
-        st.markdown("### ☁️ Cloud Sync")
+        st.success("☁ Cloud Account Connected")
+        st.markdown("### ☁ Cloud Sync")
         sync_c1, sync_c2 = st.columns(2)
         with sync_c1:
-            if st.button("💾 Save", use_container_width=True):
+            if st.button("⎙ Save", use_container_width=True):
                 if firestore_save_state(): st.toast("Saved to Firestore!")
                 else: st.toast("Failed to save.")
         with sync_c2:
-            if st.button("📥 Load", use_container_width=True):
+            if st.button("⎋ Load", use_container_width=True):
                 if firestore_load_state(): 
                     st.toast("Loaded from Firestore!")
                     st.rerun()
@@ -357,6 +373,8 @@ st.image("https://i.ibb.co/7NyFcpCK/Promethean-Studios-1.png", use_container_wid
 top_col1, top_col2 = st.columns([1, 1])
 with top_col1:
     selected_agent = st.selectbox("Active Agent Pipeline", ["Auto-Select (Intent Router)"] + list(AGENT_ROSTER.keys()))
+    # Subtle gray description for the selected agent
+    st.markdown(f"<p style='color: #888888; font-size: 0.9em; margin-top: -10px; margin-bottom: 20px;'>{AGENT_DESCRIPTIONS[selected_agent]}</p>", unsafe_allow_html=True)
 
 chat_col, code_col = st.columns([1.2, 1])
 
