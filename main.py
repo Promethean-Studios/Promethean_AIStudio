@@ -349,6 +349,13 @@ with st.sidebar:
                 else: st.toast("Failed to load.")
         st.markdown("---")
         
+    st.markdown("### 🤖 Agent Capabilities")
+    with st.container(height=280):
+        for a_name, a_desc in AGENT_DESCRIPTIONS.items():
+            if a_name != "Auto-Select (Intent Router)":
+                st.markdown(f"<div style='margin-bottom: 12px; line-height: 1.2;'><b>{a_name}</b><br><span style='color: #888888; font-size: 0.85em;'>{a_desc}</span></div>", unsafe_allow_html=True)
+
+    st.markdown("---")
     st.markdown("### System Controls")
     enable_web_search = st.toggle("Enable Live Web Search (Tavily)", value=True)
     
