@@ -7,7 +7,7 @@ import streamlit as st
 from groq import Groq
 
 # ------------------------------------------------------------------
-# 1. PAGE CONFIG & CLEAN STUDIO THEME CSS
+# 1. PAGE CONFIG & ROBOTO CONDENSED STUDIO THEME CSS
 # ------------------------------------------------------------------
 st.set_page_config(
     page_title="Promethean Studio", 
@@ -16,14 +16,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS focused on high contrast and preserving Streamlit icons
+# Custom CSS focused on Roboto Condensed typography, high contrast, and clean layout
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
     
-    body, p, h1, h2, h3, h4, .stMarkdown { font-family: 'Inter', sans-serif; }
+    /* Apply Roboto Condensed across general text elements */
+    body, p, h1, h2, h3, h4, span, label, div, .stMarkdown, .stSelectbox, .stTextInput, .stRadio { 
+        font-family: 'Roboto Condensed', sans-serif !important; 
+    }
+    
     [data-testid="stAppViewContainer"], .stApp { background-color: #FFFFFF !important; }
     #MainMenu, footer { visibility: hidden; }
+    
+    /* Preserve monospace font for code blocks */
     code, pre, .stCodeBlock { font-family: 'JetBrains Mono', monospace !important; }
     
     /* User Chat Bubble */
@@ -34,7 +40,10 @@ st.markdown("""
         padding: 1rem !important;
         margin-bottom: 0.75rem !important;
     }
-    [data-testid="stChatMessage"]:nth-child(odd) p, [data-testid="stChatMessage"]:nth-child(odd) span { color: #1A1A1A !important; }
+    [data-testid="stChatMessage"]:nth-child(odd) p, [data-testid="stChatMessage"]:nth-child(odd) span { 
+        color: #1A1A1A !important; 
+        font-family: 'Roboto Condensed', sans-serif !important;
+    }
     
     /* AI Chat Bubble */
     [data-testid="stChatMessage"]:nth-child(even) {
@@ -46,9 +55,17 @@ st.markdown("""
         margin-bottom: 0.75rem !important;
     }
     [data-testid="stChatMessage"]:nth-child(even) p, [data-testid="stChatMessage"]:nth-child(even) span, 
-    [data-testid="stChatMessage"]:nth-child(even) div, [data-testid="stChatMessage"]:nth-child(even) strong { color: #F5F5F7 !important; }
+    [data-testid="stChatMessage"]:nth-child(even) div, [data-testid="stChatMessage"]:nth-child(even) strong { 
+        color: #F5F5F7 !important; 
+        font-family: 'Roboto Condensed', sans-serif !important;
+    }
     
-    .stButton > button { border-radius: 8px !important; font-weight: 600 !important; transition: all 0.2s ease-in-out; }
+    .stButton > button { 
+        font-family: 'Roboto Condensed', sans-serif !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important; 
+        transition: all 0.2s ease-in-out; 
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -103,23 +120,39 @@ if "api_key" not in st.session_state: st.session_state.api_key = ""
 if "firebase_uid" not in st.session_state: st.session_state.firebase_uid = None
 if "firebase_token" not in st.session_state: st.session_state.firebase_token = None
 
-# --- FIREBASE REST API HELPER FUNCTIONS ---
+# --- ENHANCED FIREBASE SECRETS RESOLVER ---
 def get_fb_key():
-    try: return st.secrets["firebase"]["apiKey"]
-    except: return None
+    try:
+        if "firebase" in st.secrets and "apiKey" in st.secrets["firebase"]:
+            return st.secrets["firebase"]["apiKey"]
+        if "FIREBASE_API_KEY" in st.secrets:
+            return st.secrets["FIREBASE_API_KEY"]
+    except Exception:
+        pass
+    return os.environ.get("FIREBASE_API_KEY", None)
 
 def get_fb_project():
-    try: return st.secrets["firebase"]["projectId"]
-    except: return None
+    try:
+        if "firebase" in st.secrets and "projectId" in st.secrets["firebase"]:
+            return st.secrets["firebase"]["projectId"]
+        if "FIREBASE_PROJECT_ID" in st.secrets:
+            return st.secrets["FIREBASE_PROJECT_ID"]
+    except Exception:
+        pass
+    return os.environ.get("FIREBASE_PROJECT_ID", None)
 
 def firebase_auth(email, password, mode="login"):
     api_key = get_fb_key()
-    if not api_key: return {"error": {"message": "Firebase API Key missing from secrets."}}
+    if not api_key: 
+        return {"error": {"message": "Firebase API Key missing. Please configure [firebase] apiKey in Streamlit Secrets."}}
     
     endpoint = "signInWithPassword" if mode == "login" else "signUp"
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:{endpoint}?key={api_key}"
-    res = requests.post(url, json={"email": email, "password": password, "returnSecureToken": True})
-    return res.json()
+    try:
+        res = requests.post(url, json={"email": email, "password": password, "returnSecureToken": True}, timeout=10)
+        return res.json()
+    except Exception as e:
+        return {"error": {"message": f"Network error during authentication: {str(e)}"}}
 
 def firestore_save_state():
     project_id = get_fb_project()
@@ -135,8 +168,11 @@ def firestore_save_state():
             "workspace_code": {"stringValue": st.session_state.workspace_code}
         }
     }
-    res = requests.patch(url, headers=headers, json=payload)
-    return res.status_code == 200
+    try:
+        res = requests.patch(url, headers=headers, json=payload, timeout=10)
+        return res.status_code == 200
+    except Exception:
+        return False
 
 def firestore_load_state():
     project_id = get_fb_project()
@@ -146,16 +182,16 @@ def firestore_load_state():
     
     url = f"https://firestore.googleapis.com/v1/projects/{project_id}/databases/(default)/documents/users/{uid}"
     headers = {"Authorization": f"Bearer {token}"}
-    res = requests.get(url, headers=headers)
-    
-    if res.status_code == 200:
-        data = res.json()
-        if "fields" in data:
-            try:
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            if "fields" in data:
                 st.session_state.chat_history = json.loads(data["fields"].get("chat_history", {}).get("stringValue", "[]"))
                 st.session_state.workspace_code = data["fields"].get("workspace_code", {}).get("stringValue", "# Workspace Loaded")
                 return True
-            except: pass
+    except Exception:
+        pass
     return False
 
 # --- UTILITIES ---
@@ -174,7 +210,7 @@ def fetch_tavily_web_search(query: str):
         if response.status_code == 200:
             results = response.json().get("results", [])
             if results: return "\n".join([f"- [{r.get('title', 'Source')}]({r.get('url', '#')}): {r.get('content', '')}" for r in results])
-    except: pass
+    except Exception: pass
     return None
 
 def route_intent(prompt: str, client: Groq):
@@ -188,15 +224,15 @@ def route_intent(prompt: str, client: Groq):
         raw_choice = response.choices[0].message.content
         choice = raw_choice.strip().title() if raw_choice else "Titan"
         return choice if choice in AGENT_ROSTER else "Titan"
-    except: return "Titan" 
+    except Exception: return "Titan" 
 
 def get_groq_client():
     key = st.session_state.api_key
     if not key:
         try: key = st.secrets["GROQ_FREE_TIER_KEY"]
-        except: return None
+        except Exception: return None
     try: return Groq(api_key=key)
-    except: return None
+    except Exception: return None
 
 # ------------------------------------------------------------------
 # 4. AUTHENTICATION & CLOUD GATEWAY
@@ -227,7 +263,9 @@ if not st.session_state.authenticated:
             
             if btn_login or btn_signup:
                 if not email or not password:
-                    st.error("Please enter email and password.")
+                    st.error("Please enter both email and password.")
+                elif len(password) < 6:
+                    st.error("Password must be at least 6 characters long.")
                 else:
                     mode = "login" if btn_login else "signup"
                     result = firebase_auth(email, password, mode)
@@ -261,14 +299,13 @@ if st.session_state.loading:
     """, unsafe_allow_html=True)
     try:
         st.video("Copy of Promethean Studio.mp4", autoplay=True)
-    except:
-        st.info("Video File not found. Bypassing animation...")
+    except Exception:
+        st.info("Video file not found. Bypassing intro animation...")
         time.sleep(2)
             
     time.sleep(6) 
     st.session_state.loading = False
     
-    # Auto-load state if cloud user
     if st.session_state.firebase_uid:
         firestore_load_state()
         
@@ -406,7 +443,6 @@ if user_input:
                 extracted = extract_code(full_response)
                 if extracted: st.session_state.workspace_code = extracted
                 
-                # Auto-save to cloud if user is logged in
                 if st.session_state.firebase_uid:
                     firestore_save_state()
                 
