@@ -4,6 +4,7 @@ import json
 import time
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 from groq import Groq
 
 # ------------------------------------------------------------------
@@ -109,16 +110,7 @@ AGENT_AVATARS = {
 }
 
 USER_AVATAR = "https://i.ibb.co/PvVH62RP/user-logo-removebg-preview.png"
-
-AGENT_PROMPTS = {
-    "Titan": "You are Titan, the heavy-duty 120B orchestrator. Be casual, direct, and honest. Provide clean, safe, and helpful responses.",
-    "Mnemosyne": "You are Mnemosyne, the priority memory pipeline. Your goal is to maintain deep context across sessions. Keep track of user preferences. Be casual, honest, and helpful.",
-    "Coeus": "You are Coeus, the multi-agent teamwork and deep-thinking core. You break down tasks into sub-tasks and critically analyze code. Be casual, honest, and helpful.",
-    "Theia": "You are Theia, the visual data and interface analyzer. You provide design feedback, identify UI bugs, and analyze layouts. Be casual, honest, and helpful.",
-    "Oceanus": "You are Oceanus, the ultimate routing engine and web intelligence coordinator. Be casual, honest, and helpful.",
-    "Iapetus": "You are Iapetus, the bridge to physical reality. You specialize in low-level hardware instructions (C++ for Arduino, MicroPython). Be casual, honest, and helpful.",
-    "Phoebe": "You are Phoebe, the proactive code supervisor. You scan architectures and predict bugs before they compile. Be casual, honest, and helpful."
-}
+DEFAULT_AVATAR = "https://i.ibb.co/Cpmd4TCH/Screenshot-2026-08-01-2-34-26-AM-removebg-preview.png"
 
 enable_web_search = True
 temperature = 0.7
@@ -136,7 +128,6 @@ if "api_key" not in st.session_state: st.session_state.api_key = ""
 if "firebase_uid" not in st.session_state: st.session_state.firebase_uid = None
 if "firebase_token" not in st.session_state: st.session_state.firebase_token = None
 
-# --- ENHANCED FIREBASE SECRETS RESOLVER ---
 def get_fb_key():
     try:
         if "firebase" in st.secrets and "apiKey" in st.secrets["firebase"]:
@@ -210,7 +201,7 @@ def firestore_load_state():
         pass
     return False
 
-# --- UTILITIES ---
+# --- UTILITIES & EXPORTS ---
 def extract_code(text: str):
     bt = chr(96) * 3
     pattern = re.escape(bt) + r'(?:[\w]*\n)?(.*?)' + re.escape(bt)
@@ -249,6 +240,24 @@ def get_groq_client():
         except Exception: return None
     try: return Groq(api_key=key)
     except Exception: return None
+
+def generate_export(format_type):
+    """Generates clean exports of the current chat session."""
+    if format_type == "json":
+        return json.dumps(st.session_state.chat_history, indent=2)
+    elif format_type == "txt":
+        out = "Promethean Studio - Chat Transcript\n\n"
+        for msg in st.session_state.chat_history:
+            role = "User" if msg["role"] == "user" else msg.get("agent_name", "Promethean AI")
+            out += f"[{role}]:\n{msg['content']}\n\n"
+        return out
+    elif format_type == "md":
+        out = "# Promethean Studio - Chat Transcript\n\n"
+        for msg in st.session_state.chat_history:
+            role = "**User**" if msg["role"] == "user" else f"**{msg.get('agent_name', 'Promethean AI')}**"
+            out += f"{role}:\n\n{msg['content']}\n\n---\n\n"
+        return out
+    return ""
 
 # ------------------------------------------------------------------
 # 4. AUTHENTICATION & CLOUD GATEWAY
@@ -334,22 +343,22 @@ with st.sidebar:
     st.image("https://i.ibb.co/1fF9R2hj/Promethean-Studios.png", use_container_width=True)
     
     if st.session_state.firebase_uid:
-        st.success("☁ Cloud Account Connected")
-        st.markdown("### ☁ Cloud Sync")
+        st.success("Cloud Account Connected")
+        st.markdown("### Cloud Sync")
         sync_c1, sync_c2 = st.columns(2)
         with sync_c1:
-            if st.button("⎙ Save", use_container_width=True):
+            if st.button("Save State", use_container_width=True):
                 if firestore_save_state(): st.toast("Saved to Firestore!")
                 else: st.toast("Failed to save.")
         with sync_c2:
-            if st.button("⎋ Load", use_container_width=True):
+            if st.button("Load State", use_container_width=True):
                 if firestore_load_state(): 
                     st.toast("Loaded from Firestore!")
                     st.rerun()
                 else: st.toast("Failed to load.")
         st.markdown("---")
         
-    st.markdown("###  Agent Capabilities")
+    st.markdown("### Agent Capabilities")
     with st.container(height=280):
         for a_name, a_desc in AGENT_DESCRIPTIONS.items():
             if a_name != "Auto-Select (Intent Router)":
@@ -364,6 +373,7 @@ with st.sidebar:
     sys_prompt = st.text_area("Base Instructions", "You are a helpful, casual AI assistant. Provide clean, safe, and friendly responses.", height=100)
     
     st.markdown("---")
+    st.markdown("### Session Actions")
     col_a, col_b = st.columns(2)
     with col_a:
         if st.button("Clear Chat", use_container_width=True):
@@ -373,6 +383,15 @@ with st.sidebar:
         if st.button("Logout", use_container_width=True):
             st.session_state.clear()
             st.rerun()
+            
+    st.markdown("### Export Transcripts")
+    exp_c1, exp_c2, exp_c3 = st.columns(3)
+    with exp_c1:
+        st.download_button("MD", data=generate_export("md"), file_name="chat.md", mime="text/markdown", use_container_width=True)
+    with exp_c2:
+        st.download_button("TXT", data=generate_export("txt"), file_name="chat.txt", mime="text/plain", use_container_width=True)
+    with exp_c3:
+        st.download_button("JSON", data=generate_export("json"), file_name="chat.json", mime="application/json", use_container_width=True)
 
 # Top Banner Header
 st.image("https://i.ibb.co/7NyFcpCK/Promethean-Studios-1.png", use_container_width=True)
@@ -380,7 +399,6 @@ st.image("https://i.ibb.co/7NyFcpCK/Promethean-Studios-1.png", use_container_wid
 top_col1, top_col2 = st.columns([1, 1])
 with top_col1:
     selected_agent = st.selectbox("Active Agent Pipeline", ["Auto-Select (Intent Router)"] + list(AGENT_ROSTER.keys()))
-    # Subtle gray description for the selected agent
     st.markdown(f"<p style='color: #888888; font-size: 0.9em; margin-top: -10px; margin-bottom: 20px;'>{AGENT_DESCRIPTIONS[selected_agent]}</p>", unsafe_allow_html=True)
 
 chat_col, code_col = st.columns([1.2, 1])
@@ -392,23 +410,50 @@ with chat_col:
     
     with chat_container:
         for msg in st.session_state.chat_history:
-            msg_avatar = USER_AVATAR if msg["role"] == "user" else AGENT_AVATARS.get(msg.get("agent_name", "Titan"), "⚡")
+            msg_avatar = USER_AVATAR if msg["role"] == "user" else AGENT_AVATARS.get(msg.get("agent_name", "Titan"), DEFAULT_AVATAR)
             with st.chat_message(msg["role"], avatar=msg_avatar):
                 st.markdown(msg["content"])
 
     user_input = st.chat_input("Enter command directives to Promethean...")
 
-# --- RIGHT COLUMN: CODE WORKSPACE ---
+# --- RIGHT COLUMN: INTERACTIVE ARTIFACTS WORKSPACE ---
 with code_col:
     st.markdown("### Active Workspace")
-    st.download_button(
-        label="Download Workspace Code",
-        data=st.session_state.workspace_code,
-        file_name="promethean_workspace.py",
-        mime="text/plain",
-        use_container_width=True
-    )
-    st.code(st.session_state.workspace_code, language="python")
+    
+    # Analyze the code briefly to guess the language for syntax highlighting & preview rendering
+    code_content = st.session_state.workspace_code
+    lower_code = code_content.lower()
+    
+    code_lang = "python"
+    if "<html" in lower_code or "<!doctype" in lower_code:
+        code_lang = "html"
+    elif "function " in lower_code and "console.log" in lower_code:
+        code_lang = "javascript"
+    elif "#include" in lower_code or "std::" in lower_code:
+        code_lang = "cpp"
+        
+    # Tab Layout
+    tab_code, tab_preview, tab_doc = st.tabs(["Code Editor", "Live Preview", "Document Reader"])
+    
+    with tab_code:
+        st.download_button(
+            label="Download Workspace File",
+            data=code_content,
+            file_name=f"workspace_export.{'html' if code_lang == 'html' else 'py'}",
+            mime="text/plain",
+            use_container_width=True
+        )
+        st.code(code_content, language=code_lang)
+        
+    with tab_preview:
+        # If the generated code appears to be web components, render them interactively!
+        if code_lang == "html" or "<style" in lower_code or "<div" in lower_code or "<svg" in lower_code:
+            components.html(code_content, height=550, scrolling=True)
+        else:
+            st.info("Live Preview is optimized for Web Content (HTML, CSS, JS, or SVG). Ask an agent to build a UI to see it live here!")
+            
+    with tab_doc:
+        st.markdown(code_content)
 
 # ------------------------------------------------------------------
 # 6. EXECUTION LOGIC
@@ -446,7 +491,7 @@ if user_input:
 
     messages.append({"role": "user", "content": current_content})
 
-    bot_avatar = AGENT_AVATARS.get(active_agent, "⚡")
+    bot_avatar = AGENT_AVATARS.get(active_agent, DEFAULT_AVATAR)
     with chat_container:
         with st.chat_message("assistant", avatar=bot_avatar):
             message_placeholder = st.empty()
