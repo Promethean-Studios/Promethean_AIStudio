@@ -350,18 +350,18 @@ if st.session_state.loading:
 # 5. MAIN STUDIO UI & SIDEBAR
 # ------------------------------------------------------------------
 with st.sidebar:
-    st.image("https://i.ibb.co/1fF9R2hj/Promethean-Studios.png", use_container_width=True)
+    st.image("https://i.ibb.co/JwsZ54vR/Promethean-Studios-2.png", use_container_width=True)
     
     if st.session_state.firebase_uid:
         st.success("Cloud Account Connected")
         st.markdown("### Cloud Sync")
         sync_c1, sync_c2 = st.columns(2)
         with sync_c1:
-            if st.button("Save State", use_container_width=True):
+            if st.button("⎙ Save", use_container_width=True):
                 if firestore_save_state(): st.toast("Saved to Firestore!")
                 else: st.toast("Failed to save.")
         with sync_c2:
-            if st.button("Load State", use_container_width=True):
+            if st.button("⎋ Load", use_container_width=True):
                 if firestore_load_state(): 
                     st.toast("Loaded from Firestore!")
                     st.rerun()
@@ -430,7 +430,6 @@ with chat_col:
 with code_col:
     st.markdown("### Active Workspace")
     
-    # Analyze the code briefly to guess the language for syntax highlighting & preview rendering
     code_content = st.session_state.workspace_code
     lower_code = code_content.lower()
     
@@ -442,7 +441,6 @@ with code_col:
     elif "#include" in lower_code or "std::" in lower_code:
         code_lang = "cpp"
         
-    # Tab Layout
     tab_code, tab_preview, tab_doc = st.tabs(["Code Editor", "Live Preview", "Document Reader"])
     
     with tab_code:
@@ -456,7 +454,6 @@ with code_col:
         st.code(code_content, language=code_lang)
         
     with tab_preview:
-        # If the generated code appears to be web components, render them interactively!
         if code_lang == "html" or "<style" in lower_code or "<div" in lower_code or "<svg" in lower_code:
             components.html(code_content, height=550, scrolling=True)
         else:
