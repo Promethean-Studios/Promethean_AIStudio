@@ -349,7 +349,7 @@ with st.sidebar:
                 else: st.toast("Failed to load.")
         st.markdown("---")
         
-    st.markdown("### 🤖 Agent Capabilities")
+    st.markdown("###  Agent Capabilities")
     with st.container(height=280):
         for a_name, a_desc in AGENT_DESCRIPTIONS.items():
             if a_name != "Auto-Select (Intent Router)":
